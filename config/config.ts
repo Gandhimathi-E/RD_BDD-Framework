@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
-import { getPlaywrightSettings } from '../playwright.config';
+// import { getPlaywrightSettings } from '../playwright.config';
 
 const testEnvironment = process.env.TEST_ENV ?? 'qa';
 if (!['qa', 'uat'].includes(testEnvironment)) {

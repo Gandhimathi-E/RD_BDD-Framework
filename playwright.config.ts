@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
-import { Config } from './utils/config'
+import { config } from './config/config';
 
 const testDir = defineBddConfig({
   features: 'features/*.feature',
@@ -19,7 +19,7 @@ export default defineConfig({
     ['allure-playwright', { outputFolder: 'allure-results' }]
   ],
   use: {
-    baseURL: Config.baseUrl,
+    baseURL: config.baseUrl,
     headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
