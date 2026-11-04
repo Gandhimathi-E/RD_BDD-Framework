@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import fs from 'node:fs';
 import path from 'node:path';
 
 const testEnvironment = process.env.TEST_ENV ?? 'qa';
@@ -7,8 +8,19 @@ if (!['qa', 'uat'].includes(testEnvironment)) {
 }
 
 const environmentFile = path.resolve(__dirname, `.env.${testEnvironment}`);
-const dotenvResult = dotenv.config({ path: environmentFile });
-if (dotenvResult.error && dotenvResult.error.code !== 'NOT_FOUND_DOTENV_ENVIRONMENT') {
+const fileExists = fs.existsSync(environmentFile);
+const dotenvResult = fileExists
+  ? dotenv.config({ path: environmentFile })
+  : { parsed: {}, error: undefined };
+const errorCode =
+  dotenvResult.error && typeof dotenvResult.error === 'object' && 'code' in dotenvResult.error
+    ? String(dotenvResult.error.code)
+    : undefined;
+if (
+  dotenvResult.error &&
+  errorCode !== 'ENOENT' &&
+  errorCode !== 'NOT_FOUND_DOTENV_ENVIRONMENT'
+) {
   throw new Error(
     `Could not load environment file "${environmentFile}": ${dotenvResult.error.message}`,
   );
