@@ -1,41 +1,31 @@
-import type { LaunchOptions } from 'playwright';
+import { defineConfig, devices } from '@playwright/test';
+import { defineBddConfig } from 'playwright-bdd';
+import { Config } from './utils/config'
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+const testDir = defineBddConfig({
+  features: 'features/*.feature',
+  steps: [
+    'src/steps/*.ts',
+    'src/fixtures/bdd-fixtures.ts',
+  ],
+});
 
-export interface PlaywrightSettings {
-  browserName: BrowserName;
-  launchOptions: LaunchOptions;
-  timeoutMs: number;
-}
-
-function isBrowserName(value: string): value is BrowserName {
-  return ['chromium', 'firefox', 'webkit'].includes(value);
-}
-
-// These are Playwright library launch settings; Cucumber remains the test runner.
-export function getPlaywrightSettings(
-  environment: NodeJS.ProcessEnv,
-): PlaywrightSettings {
-  const browserName = environment.BROWSER ?? 'chromium';
-  if (!isBrowserName(browserName)) {
-    throw new Error(
-      `Unsupported BROWSER "${browserName}". Use chromium, firefox, or webkit.`,
-    );
-  }
-
-  const headlessValue = environment.HEADLESS ?? 'true';
-  if (!['true', 'false'].includes(headlessValue.toLowerCase())) {
-    throw new Error('HEADLESS must be either "true" or "false".');
-  }
-
-  const timeoutMs = Number(environment.TIMEOUT_MS ?? 30000);
-  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-    throw new Error('TIMEOUT_MS must be a positive number.');
-  }
-
-  return {
-    browserName,
-    launchOptions: { headless: headlessValue.toLowerCase() === 'true' },
-    timeoutMs,
-  };
-}
+export default defineConfig({
+  testDir,
+  fullyParallel: true,
+  workers: process.env.CI ? 2 : undefined,
+  reporter: [
+    ['list'],
+    ['allure-playwright', { outputFolder: 'allure-results' }]
+  ],
+  use: {
+    baseURL: Config.baseUrl,
+    headless: true,
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome' } }
+  ],
+});
