@@ -44,7 +44,14 @@ import { setWorldConstructor } from '@cucumber/cucumber';
 setWorldConstructor(CustomWorld);
 
 Before(async function (this: CustomWorld) {
-  const browserType = { chromium, firefox, webkit }[config.browserName];
+  const browserType = { chromium, firefox, webkit }[
+    config.browserName as 'chromium' | 'firefox' | 'webkit'
+  ];
+
+  if (!browserType) {
+    throw new Error(`Unsupported browser configuration: ${config.browserName}`);
+  }
+
   this.browser = await browserType.launch(config.launchOptions);
   this.browserContext = await this.browser.newContext();
   this.page = await this.browserContext.newPage();

@@ -3,11 +3,8 @@ import { defineBddConfig } from 'playwright-bdd';
 import { config } from './config/config';
 
 const testDir = defineBddConfig({
-  features: 'features/*.feature',
-  steps: [
-    'src/steps/*.ts',
-    'src/fixtures/bdd-fixtures.ts',
-  ],
+  features: 'features/login.feature',
+  steps: ['step-definitions/*.ts'],
 });
 
 export default defineConfig({
@@ -16,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: [
     ['list'],
-    ['allure-playwright', { outputFolder: 'allure-results' }]
+    ['allure-playwright', { outputFolder: 'allure-results' }],
   ],
   use: {
     baseURL: config.baseUrl,
@@ -25,7 +22,5 @@ export default defineConfig({
     video: 'retain-on-failure',
     trace: 'on-first-retry',
   },
-  projects: [
-    { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome' } }
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });

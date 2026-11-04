@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
-// import { getPlaywrightSettings } from '../playwright.config';
 
 const testEnvironment = process.env.TEST_ENV ?? 'qa';
 if (!['qa', 'uat'].includes(testEnvironment)) {
@@ -9,7 +8,7 @@ if (!['qa', 'uat'].includes(testEnvironment)) {
 
 const environmentFile = path.resolve(__dirname, `.env.${testEnvironment}`);
 const dotenvResult = dotenv.config({ path: environmentFile });
-if (dotenvResult.error) {
+if (dotenvResult.error && dotenvResult.error.code !== 'NOT_FOUND_DOTENV_ENVIRONMENT') {
   throw new Error(
     `Could not load environment file "${environmentFile}": ${dotenvResult.error.message}`,
   );
@@ -24,8 +23,19 @@ const PASSWORD =
   process.env.APP_PASSWORD ?? environmentValues.PASSWORD ?? process.env.PASSWORD;
 if (!BASE_URL || !USERNAME || !PASSWORD) {
   throw new Error(
-    `BASE_URL, USERNAME, and PASSWORD must be set in "${environmentFile}".`,
+    `BASE_URL, USERNAME, and PASSWORD must be set in "${environmentFile}" or provided as environment variables.`,
   );
+}
+
+const browserName = (process.env.BROWSER ?? 'chromium').toLowerCase();
+if (!['chromium', 'firefox', 'webkit'].includes(browserName)) {
+  throw new Error(`Unsupported BROWSER "${browserName}". Use chromium, firefox, or webkit.`);
+}
+
+const headless = (process.env.HEADLESS ?? 'true').toLowerCase() !== 'false';
+const timeoutMs = Number(process.env.TIMEOUT_MS ?? 30000);
+if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+  throw new Error(`TIMEOUT_MS must be a positive number. Received "${process.env.TIMEOUT_MS}".`);
 }
 
 export const config = {
@@ -33,5 +43,11 @@ export const config = {
   username: USERNAME,
   password: PASSWORD,
   testEnvironment,
-  ...getPlaywrightSettings(process.env),
+  browserName,
+  headless,
+  timeoutMs,
+  launchOptions: {
+    headless,
+    args: process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : [],
+  },
 };
